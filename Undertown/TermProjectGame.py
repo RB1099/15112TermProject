@@ -1,3 +1,4 @@
+#CMU Graphics downloaded from http://www.cs.cmu.edu/~112/notes/hw9.html
 from cmu_112_graphics import *
 from tkinter import *
 from PIL import Image
@@ -45,6 +46,9 @@ class Slime(Enemy):
         if abs(playerRow-self.row)<=1 and abs(playerCol-self.col)<=1:
             self.row-=drow
             self.col-=dcol
+            GameMode.health-=5
+            if GameMode.health<0:
+                GameMode.health=0
 
         self.row+=drow
         self.col+=dcol
@@ -102,6 +106,9 @@ class Skeleton(Enemy):
         if abs(playerRow-self.row)<=1 and abs(playerCol-self.col)<=1:
             self.row-=drow
             self.col-=dcol
+            GameMode.health-=10
+            if GameMode.health<0:
+                GameMode.health=0
 
         self.row+=drow
         self.col+=dcol
@@ -126,10 +133,8 @@ class Skeleton(Enemy):
             if self.row==GameMode.boss[i].row and self.col==GameMode.boss[i].col:
                 self.row-=drow
                 self.col-=dcol
-
-        
-
         if self.row==playerRow and self.col==playerCol:
+            GameMode.health-=5
             self.row-=drow
             self.col-=dcol
 
@@ -137,11 +142,103 @@ class Demon(Enemy):
     def __init__(self, row, col):
         super().__init__(row, col)
         self.color="brown"
+        self.health=10
+
+    def demonMove(self, playerRow, playerCol):
+        if (playerRow-self.row)>0:
+            drow=1
+        elif (playerRow-self.row)<0:
+            drow=-1
+        else:
+            drow=0
+        if (playerCol-self.col)>0:
+            dcol=1
+        elif (playerCol-self.col)<0:
+            dcol=-1
+        else:
+            dcol=0
+            
+        if abs(playerRow-self.row)<=1 and abs(playerCol-self.col)<=1:
+            self.row-=drow
+            self.col-=dcol
+            GameMode.health-=10
+            if GameMode.health<0:
+                GameMode.health=0
+
+        self.row+=drow
+        self.col+=dcol
+
+        for i in range(len(GameMode.blocks)):
+            for j in range(len(GameMode.blocks[i].block)):
+                for c in range(len(GameMode.blocks[i].block[j])):
+                    if GameMode.blocks[i].block[j][c]:
+                        if self.row==GameMode.blocks[i].row+j and self.col==GameMode.blocks[i].col+c:
+                            self.row-=drow
+                            self.col-=dcol
+    
+        for i in range(len(GameMode.slimes)):
+            if self.row==GameMode.slimes[i].row and self.col==GameMode.slimes[i].col:
+                self.row-=drow
+                self.col-=dcol
+        for i in range(len(GameMode.skels)):
+            if self!=GameMode.skels[i] and self.row==GameMode.skels[i].row and self.col==GameMode.skels[i].col:
+                self.row-=drow
+                self.col-=dcol
+        if self.row==playerRow and self.col==playerCol:
+            GameMode.health-=20
+            self.row-=drow
+            self.col-=dcol
 
 class Dragon(Enemy):
     def __init__(self, row, col):
         super().__init__(row, col)
-        self.color="yellow"
+        self.color="black"
+        self.health=10
+    
+    def dragonMove(self, playerRow, playerCol):
+        if (playerRow-self.row)>0:
+            drow=1
+        elif (playerRow-self.row)<0:
+            drow=-1
+        else:
+            drow=0
+        if (playerCol-self.col)>0:
+            dcol=1
+        elif (playerCol-self.col)<0:
+            dcol=-1
+        else:
+            dcol=0
+            
+        if abs(playerRow-self.row)<=1 and abs(playerCol-self.col)<=1:
+            self.row-=drow
+            self.col-=dcol
+            GameMode.health-=10
+            if GameMode.health<0:
+                GameMode.health=0
+
+        self.row+=drow
+        self.col+=dcol
+
+        for i in range(len(GameMode.blocks)):
+            for j in range(len(GameMode.blocks[i].block)):
+                for c in range(len(GameMode.blocks[i].block[j])):
+                    if GameMode.blocks[i].block[j][c]:
+                        if self.row==GameMode.blocks[i].row+j and self.col==GameMode.blocks[i].col+c:
+                            self.row-=drow
+                            self.col-=dcol
+    
+        for i in range(len(GameMode.slimes)):
+            if self.row==GameMode.slimes[i].row and self.col==GameMode.slimes[i].col:
+                self.row-=drow
+                self.col-=dcol
+        for i in range(len(GameMode.skels)):
+            if self.row==GameMode.skels[i].row and self.col==GameMode.skels[i].col:
+                self.row-=drow
+                self.col-=dcol
+        if self.row==playerRow and self.col==playerCol:
+            GameMode.health-=20
+            self.row-=drow
+            self.col-=dcol
 
 class Block(object):
     def __init__(self, row, col, block):
@@ -225,7 +322,8 @@ class TransitionMode(Mode):
                     else:
                         isLegal=False
                         GameMode.treasure.pop(0)
-                        GameMode.treasure.append(Chest(random.randrange(13), random.randrange(18))) 
+                        GameMode.treasure.append(Chest(random.randrange(13), random.randrange(18)))
+                 
             GameMode.treasure.append(Chest(random.randrange(1, 12), random.randrange(1, 17)))
             isLegal=False
             while isLegal==False:
@@ -266,8 +364,66 @@ class TransitionMode(Mode):
             GameMode.slimes.append(Slime(random.randrange(1, 12), random.randrange(1, 17)))
             GameMode.skels.append(Skeleton(random.randrange(1, 12), random.randrange(1, 17)))
             GameMode.skels.append(Skeleton(random.randrange(1, 12), random.randrange(1, 17)))
+            GameMode.treasure.append(Chest(random.randrange(13), random.randrange(18)))
             isLegal=False
+            while isLegal==False:
+                isLegal=True
+                if (GameMode.treasure[0].row!=0 or GameMode.treasure[0].row!=12): 
+                    if (GameMode.treasure[0].col==0 or GameMode.treasure[0].col==17):
+                        isLegal=True
+                    else:
+                        isLegal=False
+                        GameMode.treasure.pop(0)
+                        GameMode.treasure.append(Chest(random.randrange(13), random.randrange(18)))
+                elif (GameMode.treasure[0].col!=0 or GameMode.treasure[0].col!=17):
+                    if (GameMode.treasure[0].row==0 or GameMode.treasure[0].row==12):
+                        isLegal=True
+                    else:
+                        isLegal=False
+                        GameMode.treasure.pop(0)
+                        GameMode.treasure.append(Chest(random.randrange(13), random.randrange(18)))
+                else:
+                    for i in range(len(GameMode.blocks)):
+                        for j in range(len(GameMode.blocks[i].block)):
+                            for c in range(len(GameMode.blocks[i].block[j])):
+                                if GameMode.blocks[i].block[j][c]:
+                                    if GameMode.blocks[i].row+j==GameMode.treasure[0].row and GameMode.blocks[i].col+c==GameMode.treasure[0].col:
+                                        isLegal=False
+                                        GameMode.treasure.pop(0)
+                                        GameMode.treasure.append(Chest(random.randrange(13), random.randrange(18))) 
+            GameMode.treasure.append(Chest(random.randrange(13), random.randrange(18)))
+            isLegal=False
+            while isLegal==False:
+                isLegal=True
+                if (GameMode.treasure[1].row!=0 or GameMode.treasure[1].row!=12): 
+                    if (GameMode.treasure[1].col==0 or GameMode.treasure[1].col==17):
+                        isLegal=True
+                    else:
+                        isLegal=False
+                        GameMode.treasure.pop(1)
+                        GameMode.treasure.append(Chest(random.randrange(13), random.randrange(18)))
+                elif (GameMode.treasure[1].col!=0 or GameMode.treasure[1].col!=17):
+                    if (GameMode.treasure[1].row==0 or GameMode.treasure[1].row==12):
+                        isLegal=True
+                    else:
+                        isLegal=False
+                        GameMode.treasure.pop(1)
+                        GameMode.treasure.append(Chest(random.randrange(13), random.randrange(18)))
+                elif GameMode.treasure[0]==GameMode.treasure[1]:
+                    isLegal=False
+                    GameMode.treasure.pop(1)
+                    GameMode.treasure.append(Chest(random.randrange(13), random.randrange(18)))
+                else:
+                    for i in range(len(GameMode.blocks)):
+                        for j in range(len(GameMode.blocks[i].block)):
+                            for c in range(len(GameMode.blocks[i].block[j])):
+                                if GameMode.blocks[i].block[j][c]:
+                                    if GameMode.blocks[i].row+j==GameMode.treasure[1].row and GameMode.blocks[i].col+c==GameMode.treasure[1].col:
+                                        isLegal=False
+                                        GameMode.treasure.pop(1)
+                                        GameMode.treasure.append(Chest(random.randrange(1, 12), random.randrange(1, 17)))
             #checks for correct placement of monsters
+            isLegal=False
             while isLegal==False:
                 isLegal=True
                 if GameMode.slimes[0]==GameMode.slimes[1]:
@@ -306,46 +462,7 @@ class TransitionMode(Mode):
                                         isLegalBlock=False
                                         GameMode.skels[1]=Skeleton(random.randrange(1, 12), random.randrange(1, 17))
 
-            GameMode.treasure.append(Chest(random.randrange(13), random.randrange(18)))
-            isLegal=False
-            while isLegal==False:
-                isLegal=True
-                if (GameMode.treasure[0].row!=0 or GameMode.treasure[0].row!=12): 
-                    if (GameMode.treasure[0].col==0 or GameMode.treasure[0].col==17):
-                        isLegal=True
-                    else:
-                        isLegal=False
-                        GameMode.treasure.pop(0)
-                        GameMode.treasure.append(Chest(random.randrange(13), random.randrange(18)))
-                elif (GameMode.treasure[0].col!=0 or GameMode.treasure[0].col!=17):
-                    if (GameMode.treasure[0].row==0 or GameMode.treasure[0].row==12):
-                        isLegal=True
-                    else:
-                        isLegal=False
-                        GameMode.treasure.pop(0)
-                        GameMode.treasure.append(Chest(random.randrange(13), random.randrange(18))) 
-            GameMode.treasure.append(Chest(random.randrange(1, 12), random.randrange(1, 17)))
-            isLegal=False
-            while isLegal==False:
-                isLegal=True
-                if (GameMode.treasure[1].row!=0 or GameMode.treasure[1].row!=12): 
-                    if (GameMode.treasure[1].col==0 or GameMode.treasure[1].col==17):
-                        isLegal=True
-                    else:
-                        isLegal=False
-                        GameMode.treasure.pop(1)
-                        GameMode.treasure.append(Chest(random.randrange(13), random.randrange(18)))
-                elif (GameMode.treasure[1].col!=0 or GameMode.treasure[1].col!=17):
-                    if (GameMode.treasure[1].row==0 or GameMode.treasure[1].row==12):
-                        isLegal=True
-                    else:
-                        isLegal=False
-                        GameMode.treasure.pop(1)
-                        GameMode.treasure.append(Chest(random.randrange(13), random.randrange(18)))
-                elif GameMode.treasure[0]==GameMode.treasure[1]:
-                    isLegal=False
-                    GameMode.treasure.pop(1)
-                    GameMode.treasure.append(Chest(random.randrange(13), random.randrange(18)))
+
 
         elif roomType==3:
             bossType=random.randrange(1, 3)
@@ -353,6 +470,16 @@ class TransitionMode(Mode):
             GameMode.slimes.append(Slime(random.randrange(1, 12), random.randrange(1, 17)))
             GameMode.skels.append(Skeleton(random.randrange(1, 12), random.randrange(1, 17)))
             GameMode.skels.append(Skeleton(random.randrange(1, 12), random.randrange(1, 17)))
+            GameMode.blocks=[]
+            for i in range(2, 11):
+                GameMode.blocks.append(Block(i, 2, 1))
+                GameMode.blocks.append(Block(i, 14, 1))
+            GameMode.treasure.append(Chest(0, 0))
+            GameMode.treasure.append(Chest(0, 3))
+            GameMode.treasure.append(Chest(0, 6))
+            GameMode.treasure.append(Chest(0, 11))
+            GameMode.treasure.append(Chest(0, 14))
+            GameMode.treasure.append(Chest(0, 17))
             isLegal=False
             #checks for correct placement of monsters
             while isLegal==False:
@@ -405,9 +532,9 @@ class TransitionMode(Mode):
                                         isLegalBlock=False
                                         GameMode.skels[1]=Skeleton(random.randrange(1, 12), random.randrange(1, 17))
             if bossType==1:
-                GameMode.boss.append(Demon(6, 9))
+                GameMode.boss.append(Demon(6, 8))
             else:
-                GameMode.boss.append(Dragon(6, 9))
+                GameMode.boss.append(Dragon(6, 8))
         mode.app.setActiveMode(mode.app.gameMode)
         
 
@@ -417,9 +544,10 @@ class GameMode(Mode):
     skels=[]
     boss=[]
     treasure=[]
-    lastDirection=""
     playerRow=0
     playerCol=0
+    health=100
+    score=0
     def appStarted(mode):
         mode.background=mode.loadImage('dungeonBackground.png')
         mode.playerRow = 10
@@ -427,10 +555,10 @@ class GameMode(Mode):
         mode.running=True
         mode.rows, mode.cols, mode.cellSize, mode.margin=gameDimensions()
         mode.board=[]
+        mode.score=0
         for row in range(mode.rows):
             mode.board+=[[None] * mode.cols]
-        mode.health=100
-        mode.score=0
+        mode.lastDirection=[]
     
     blockNums=[random.randrange(6) for i in range(10)]
     for i in range(10):
@@ -441,23 +569,52 @@ class GameMode(Mode):
         if event.key=="Right":
             mode.drow=0
             mode.dcol=1
-            lastDirection="Right"
+            mode.lastDirection=[mode.drow, mode.dcol]
             mode.movePlayer()
         elif event.key=="Left":
             mode.drow=0
             mode.dcol=-1
-            lastDirection="Left"
+            mode.lastDirection=[mode.drow, mode.dcol]
             mode.movePlayer()
         elif event.key=="Down":
             mode.drow=1
             mode.dcol=0
-            lastDirection="Down"
+            mode.lastDirection=[mode.drow, mode.dcol]
             mode.movePlayer()
         elif event.key=="Up":
             mode.drow=-1
             mode.dcol=0
-            lastDirection="Up"
+            mode.lastDirection=[mode.drow, mode.dcol]
             mode.movePlayer()
+        elif event.key=="Space":
+            for i in mode.treasure:
+                if mode.playerRow+mode.lastDirection[0]==i.row and mode.playerCol+mode.lastDirection[1]==i.col:
+                    mode.score+=i.gold
+                    mode.treasure.remove(i)
+            for i in mode.slimes:
+                if mode.playerRow+mode.lastDirection[0]==i.row and mode.playerCol+mode.lastDirection[1]==i.col:
+                    i.health-=1
+                    i.row+=2*(mode.lastDirection[0])
+                    i.col+=2*(mode.lastDirection[1])
+                    if i.health==0:
+                        mode.slimes.remove(i)
+                        mode.score+=2
+            for i in mode.skels:
+                if mode.playerRow+mode.lastDirection[0]==i.row and mode.playerCol+mode.lastDirection[1]==i.col:
+                    i.health-=1
+                    i.row+=2*(mode.lastDirection[0])
+                    i.col+=2*(mode.lastDirection[1])
+                    if i.health==0:
+                        mode.skels.remove(i)
+                        mode.score+=4
+            for i in mode.boss:
+                if mode.playerRow+mode.lastDirection[0]==i.row and mode.playerCol+mode.lastDirection[1]==i.col:
+                    i.health-=1
+                    i.row+=2*(mode.lastDirection[0])
+                    i.col+=2*(mode.lastDirection[1])
+                    if i.health==0:
+                        mode.boss.remove(i)
+                        mode.score+=15
 
     def movePlayer(mode):
         mode.playerRow+=mode.drow
@@ -498,6 +655,10 @@ class GameMode(Mode):
                 if mode.playerRow==mode.boss[i].row and mode.playerCol==mode.boss[i].col:
                     mode.playerRow-=mode.drow
                     mode.playerCol-=mode.dcol
+            for i in range(len(mode.treasure)):
+                if mode.playerRow==mode.treasure[i].row and mode.playerCol==mode.treasure[i].col:
+                    mode.playerRow-=mode.drow
+                    mode.playerCol-=mode.dcol
         mode.drow=0
         mode.dcol=0
 
@@ -531,6 +692,13 @@ class GameMode(Mode):
             Slime.slimeMove(mode.slimes[i], mode.playerRow, mode.playerCol)
         for i in range(len(mode.skels)):
             Skeleton.skelMove(mode.skels[i], mode.playerRow, mode.playerCol)
+        for i in range(len(mode.boss)):
+            if type(mode.boss[i])==Demon:
+                Demon.demonMove(mode.boss[i], mode.playerRow, mode.playerCol)
+            elif type(mode.boss[i])==Dragon:
+                Dragon.dragonMove(mode.boss[i], mode.playerRow, mode.playerCol)
+        if mode.health==0:
+            mode.app.setActiveMode(mode.app.gameOver)
 
     def redrawAll(mode, canvas):
         if mode.running:
@@ -539,12 +707,27 @@ class GameMode(Mode):
             mode.drawEnemies(canvas)
             mode.drawTreasure(canvas)
             mode.drawCell(canvas, mode.playerRow, mode.playerCol, "black")
+            canvas.create_text(80, 20, text=f"Score: {mode.score}", font='Times 40 bold', fill="black")
+            canvas.create_text(mode.width-110, 20, text=f"Health: {mode.health}", font="Times 40 bold", fill="black")
+
+class GameOverMode(Mode):
+    def redrawAll(mode, canvas):
+        canvas.create_rectangle(0, 0, mode.width, mode.height, fill="black")
+        canvas.create_text(mode.width/2, mode.height/2-40, text="Game Over!", font="Times 40 bold", fill="white")
+        canvas.create_text(mode.width/2, mode.height/2, text=f"Final Score: {GameMode.score}", font="Times 40 bold", fill="white")
+        canvas.create_text(mode.width/2, mode.height/2+40, text="Press R to restart", font="Times 40 bold", fill="white")
+    
+    def keyPressed(mode, event):
+        if event.key=="r":
+            GameMode.health=100
+            mode.app.setActiveMode(GameMode())
 
 class MyModalApp(ModalApp):
     def appStarted(app):
         app.gameMode=GameMode()
         app.splashScreenMode=SplashScreenMode()
         app.transitionMode=TransitionMode()
+        app.gameOver=GameOverMode()
         app.setActiveMode(app.splashScreenMode)
         app.timerDelay=500
 
